@@ -198,6 +198,11 @@ public class Swatch implements Tile
     return String.format("(%d, %d, %d, %d)", x, y, width, height);
   }
 
+  public void draw(Graphics g, int u, int v, boolean reverse)
+  {
+    g.drawImage(img, u + width, v, u, v + height, x, y, x + width, y + height, null);
+  }
+
 
 
 }

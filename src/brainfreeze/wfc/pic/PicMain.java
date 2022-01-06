@@ -21,20 +21,20 @@ import brainfreeze.wfc.WaveFunctionCollapse;
 
 public class PicMain
 {
-  public static final int OUTPUT_REPEAT = 4;
+  public static final int OUTPUT_REPEAT = 1;
   public static final boolean WRAP_SOURCE = false;
-  public static final boolean WRAP_TARGET = true;
-  public static final boolean REVERSE_Y_COPY = true;
+  public static final boolean WRAP_TARGET = false;
+  public static final boolean REVERSE_Y_COPY = false;
   public static final boolean ROTATIONS = true;
-//  public static final boolean REFLECTIONS = true;
+  // public static final boolean REFLECTIONS = true;
   public static boolean POSTERIZE = true;
-  public static int POSTER_THRESHOLD = 64;
+  public static int POSTER_THRESHOLD = 32;
   static int SCALE = 4;
-  static int SEED = 0;
-  static final int TILE_WIDTH = 5;
-  static final int TILE_HEIGHT = 5;
-  static final int CELLS_ACROSS = 10;
-  static final int CELLS_DOWN = 10;
+  static int SEED = 1162274069;
+  static final int TILE_WIDTH = 7;
+  static final int TILE_HEIGHT = 7;
+  static final int CELLS_ACROSS = 8;
+  static final int CELLS_DOWN = 8;
 
   public static void main(String[] args) throws IOException
   {
@@ -48,7 +48,7 @@ public class PicMain
     //
     // }
     // }));
-    BufferedImage img = ImageIO.read(new File("branches6.png"));
+    BufferedImage img = ImageIO.read(new File("street2b.png"));
     new Thread(() -> {
       while (img.getWidth() == -1)
       {
@@ -83,6 +83,7 @@ public class PicMain
 
     SEED = new Random().nextInt();
     Random rnd = new Random(SEED);
+    System.out.println("seed = " + SEED);
     boolean done = false;
     Map<Coord, Swatch> result = null;
     while (!done)
@@ -90,12 +91,6 @@ public class PicMain
       try
       {
         result = wfc.run(rnd, SCALE);
-        // if (result.size() == CELLS_ACROSS * CELLS_DOWN)
-        // {
-        // done = true;
-        // } else {
-        // System.out.println("wrong size");
-        // }
 
         Toolkit.getDefaultToolkit().beep();
         System.out.println(result);
@@ -107,10 +102,22 @@ public class PicMain
         for (Coord coord : result.keySet())
         {
           int u = TILE_WIDTH * coord.i;
+          int urev = TILE_WIDTH*(CELLS_ACROSS - coord.i - 1);
           int v = TILE_HEIGHT * coord.j;
-          for (int i = 0; i < OUTPUT_REPEAT; i++) {
-            for (int j = 0; j < OUTPUT_REPEAT; j++) {
-              result.get(coord).draw(g, u + i * CELLS_ACROSS * TILE_WIDTH, v + j * CELLS_DOWN * TILE_HEIGHT);
+          for (int i = 0; i < OUTPUT_REPEAT; i++)
+          {
+            for (int j = 0; j < OUTPUT_REPEAT; j++)
+            {
+              if (WRAP_TARGET && REVERSE_Y_COPY && j % 2 == 1)
+              {
+                result.get(coord).draw(g, urev + i * CELLS_ACROSS * TILE_WIDTH,
+                    v + j * CELLS_DOWN * TILE_HEIGHT, true);
+              }
+              else
+              {
+                result.get(coord).draw(g, u + i * CELLS_ACROSS * TILE_WIDTH,
+                    v + j * CELLS_DOWN * TILE_HEIGHT);
+              }
             }
           }
           System.out.println(coord + " -> " + result.get(coord));
@@ -176,11 +183,17 @@ public class PicMain
         }
         if (v < yTiles - 1)
         {
-          graph.addEdge(new Coord(u, v, 0), new Coord(u, v + 1, 0), new DirectedEdge("vertical"));
+          graph.addEdge(new Coord(u, v, 0), new Coord(u, v + 1, 0),
+              new DirectedEdge("vertical"));
         }
-        else if (WRAP_TARGET)
+        else if (!REVERSE_Y_COPY && WRAP_TARGET)
         {
           graph.addEdge(new Coord(u, v, 0), new Coord(u, 0, 0), new DirectedEdge("vertical"));
+        }
+        else if (REVERSE_Y_COPY && WRAP_TARGET)
+        {
+          graph.addEdge(new Coord(u, v, 0), new Coord(xTiles - u - 1, 0, 0),
+              new DirectedEdge("verticalreverse"));
         }
       }
     }

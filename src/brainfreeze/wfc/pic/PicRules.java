@@ -24,6 +24,7 @@ public class PicRules implements CandidateRules<Coord, Swatch>
 {
   private Graph<Swatch, Object> candidateGraphHorizontal;
   private Graph<Swatch, Object> candidateGraphVertical;
+  private Graph<Swatch, Object> candidateGraphVerticalReverse;
   private Set<Swatch> swatches = new HashSet<Swatch>();
 
   private BufferedImage img;
@@ -46,6 +47,7 @@ public class PicRules implements CandidateRules<Coord, Swatch>
     System.out.println("building candidate graph...");
     candidateGraphHorizontal = new DefaultDirectedGraph<>(Object.class);
     candidateGraphVertical = new DefaultDirectedGraph<>(Object.class);
+    candidateGraphVerticalReverse = new DefaultDirectedGraph<>(Object.class);
     int width = img.getWidth(null);
     int height = img.getHeight(null);
     if (PicMain.ROTATIONS && tileWidth != tileHeight) {
@@ -99,23 +101,27 @@ public class PicRules implements CandidateRules<Coord, Swatch>
         swatches.add(swatch);
         candidateGraphHorizontal.addVertex(swatch);
         candidateGraphVertical.addVertex(swatch);
+        candidateGraphVerticalReverse.addVertex(swatch);
         if (r90 != null) {
           swatch = new Swatch(r90, v * tileHeight, u * tileWidth, tileHeight, tileWidth);
           swatches.add(swatch);
           candidateGraphHorizontal.addVertex(swatch);
           candidateGraphVertical.addVertex(swatch);
+          candidateGraphVerticalReverse.addVertex(swatch);
         }
         if (r180 != null) {
           swatch = new Swatch(r180, u * tileWidth, v * tileHeight, tileWidth, tileHeight);
           swatches.add(swatch);
           candidateGraphHorizontal.addVertex(swatch);
           candidateGraphVertical.addVertex(swatch);
+          candidateGraphVerticalReverse.addVertex(swatch);
         }
         if (r270 != null) {
           swatch = new Swatch(r270, v * tileHeight, u*tileWidth, tileHeight, tileWidth);
           swatches.add(swatch);
           candidateGraphHorizontal.addVertex(swatch);
           candidateGraphVertical.addVertex(swatch);
+          candidateGraphVerticalReverse.addVertex(swatch);
         }
       }
     }
@@ -128,8 +134,10 @@ public class PicRules implements CandidateRules<Coord, Swatch>
     {
       int[] eastFringe = swatch.getEastFringe();
       int[] southFringe = swatch.getSouthFringe();
+      int[] southFringeReverse = southFringe == null ? null : reverse(southFringe);
       int[] westFringe = swatch.getWestFringe();
       int[] northFringe = swatch.getNorthFringe();
+      int[] northFringeReverse = northFringe == null ? null : reverse(northFringe);
       for (Swatch swatch2 : swatches)
       {
         int[] westEdge = westEdges.get(swatch2);
@@ -152,6 +160,10 @@ public class PicRules implements CandidateRules<Coord, Swatch>
         {
           candidateGraphVertical.addEdge(swatch, swatch2);
         }
+        if (Arrays.equals(southFringeReverse, northEdge))
+        {
+          candidateGraphVerticalReverse.addEdge(swatch, swatch2);
+        }
 
         int[] eastEdge = eastEdges.get(swatch2);
         if (eastEdge == null)
@@ -173,6 +185,10 @@ public class PicRules implements CandidateRules<Coord, Swatch>
         {
           candidateGraphVertical.addEdge(swatch2, swatch);
         }
+        if (Arrays.equals(northFringeReverse, southEdge))
+        {
+          candidateGraphVerticalReverse.addEdge(swatch2, swatch);
+        }
       }
       if (candidateGraphHorizontal.outgoingEdgesOf(swatch).size() == 0)
       {
@@ -186,6 +202,15 @@ public class PicRules implements CandidateRules<Coord, Swatch>
       System.out.println("so far " + numSoFar + "/" + numTotal);
     }
     System.out.println("candidate graph built.");
+  }
+
+  private int[] reverse(int[] array)
+  {
+    int[] result = new int[array.length];
+    for (int i = 0; i < array.length; i++) {
+      result[i] = array[array.length - i - 1];
+    }
+    return result;
   }
 
   @Override
@@ -223,6 +248,16 @@ public class PicRules implements CandidateRules<Coord, Swatch>
             possibilities2.add(candidateGraphVertical.getEdgeSource(e));
           }
           candidates.retainAll(otherCoord, possibilities2);
+          break;
+          
+        case "verticalreverse":
+          Set<Object> incomingCandidates3 = candidateGraphVerticalReverse.incomingEdgesOf(tile);
+          Set<Swatch> possibilities3 = new HashSet<Swatch>();
+          for (Object e : incomingCandidates3)
+          {
+            possibilities3.add(candidateGraphVerticalReverse.getEdgeSource(e));
+          }
+          candidates.retainAll(otherCoord, possibilities3);
           break;
 
         default:
@@ -264,6 +299,17 @@ public class PicRules implements CandidateRules<Coord, Swatch>
           }
           // System.out.println("possibilities: " + possibilities2);
           candidates.retainAll(otherCoord, possibilities2);
+          break;
+
+        case "verticalreverse":
+          Set<Object> outgoingCandidates3 = candidateGraphVerticalReverse.outgoingEdgesOf(tile);
+          Set<Swatch> possibilities3 = new HashSet<Swatch>();
+          for (Object e : outgoingCandidates3)
+          {
+            possibilities3.add(candidateGraphVerticalReverse.getEdgeTarget(e));
+          }
+          // System.out.println("possibilities: " + possibilities2);
+          candidates.retainAll(otherCoord, possibilities3);
           break;
 
         default:
