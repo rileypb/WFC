@@ -21,18 +21,18 @@ import brainfreeze.wfc.WaveFunctionCollapse;
 
 public class PicMain
 {
-  public static final int OUTPUT_REPEAT = 1;
+  public static final int OUTPUT_REPEAT = 4;
   public static final boolean WRAP_SOURCE = false;
-  public static final boolean WRAP_TARGET = false;
-  public static final boolean REVERSE_Y_COPY = false;
+  public static final boolean WRAP_TARGET = true;
+  public static final boolean REVERSE_Y_COPY = true;
   public static final boolean ROTATIONS = true;
   // public static final boolean REFLECTIONS = true;
   public static boolean POSTERIZE = true;
   public static int POSTER_THRESHOLD = 32;
   static int SCALE = 4;
   static int SEED = 1162274069;
-  static final int TILE_WIDTH = 7;
-  static final int TILE_HEIGHT = 7;
+  static final int TILE_WIDTH = 5;
+  static final int TILE_HEIGHT = 5;
   static final int CELLS_ACROSS = 8;
   static final int CELLS_DOWN = 8;
 
@@ -48,7 +48,7 @@ public class PicMain
     //
     // }
     // }));
-    BufferedImage img = ImageIO.read(new File("street2b.png"));
+    BufferedImage img = ImageIO.read(new File("template1.png"));
     new Thread(() -> {
       while (img.getWidth() == -1)
       {
@@ -78,8 +78,8 @@ public class PicMain
         DirectedEdge.class);
     buildGraph(graph, CELLS_ACROSS, CELLS_DOWN, TILE_WIDTH, TILE_HEIGHT);
     PicRules rules = new PicRules(img, TILE_WIDTH, TILE_HEIGHT, graph);
-    WaveFunctionCollapse<Coord, Swatch, DirectedEdge> wfc = new WaveFunctionCollapse<Coord, Swatch, DirectedEdge>(
-        rules, graph, im, TILE_WIDTH, TILE_HEIGHT, drawPanel);
+    WaveFunctionCollapse<Coord, Swatch, DirectedEdge, PicWFCHandler> wfc = new WaveFunctionCollapse<Coord, Swatch, DirectedEdge, PicWFCHandler>(
+        rules, graph, new PicWFCHandler(im, drawPanel, TILE_WIDTH, TILE_HEIGHT, SCALE));
 
     SEED = new Random().nextInt();
     Random rnd = new Random(SEED);
@@ -90,7 +90,7 @@ public class PicMain
     {
       try
       {
-        result = wfc.run(rnd, SCALE);
+        result = wfc.run(rnd);
 
         Toolkit.getDefaultToolkit().beep();
         System.out.println(result);
@@ -102,7 +102,7 @@ public class PicMain
         for (Coord coord : result.keySet())
         {
           int u = TILE_WIDTH * coord.i;
-          int urev = TILE_WIDTH*(CELLS_ACROSS - coord.i - 1);
+          int urev = TILE_WIDTH * (CELLS_ACROSS - coord.i - 1);
           int v = TILE_HEIGHT * coord.j;
           for (int i = 0; i < OUTPUT_REPEAT; i++)
           {
@@ -183,8 +183,7 @@ public class PicMain
         }
         if (v < yTiles - 1)
         {
-          graph.addEdge(new Coord(u, v, 0), new Coord(u, v + 1, 0),
-              new DirectedEdge("vertical"));
+          graph.addEdge(new Coord(u, v, 0), new Coord(u, v + 1, 0), new DirectedEdge("vertical"));
         }
         else if (!REVERSE_Y_COPY && WRAP_TARGET)
         {

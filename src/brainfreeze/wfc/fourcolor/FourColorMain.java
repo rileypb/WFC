@@ -8,10 +8,32 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultUndirectedGraph;
 
 import brainfreeze.wfc.Edge;
+import brainfreeze.wfc.TileMapWithCandidates;
+import brainfreeze.wfc.WFCHandler;
 import brainfreeze.wfc.WaveFunctionCollapse;
+import brainfreeze.wfc.fourcolor.FourColorMain.FourColorWFCHandler;
 
 public class FourColorMain
 {
+  public static class FourColorWFCHandler implements WFCHandler<String, FourColorTile, Edge>
+  {
+
+    @Override
+    public void after(TileMapWithCandidates<String, FourColorTile> map, Graph<String, Edge> graph,
+        String coord, FourColorTile candidate)
+    {
+      ; // do nothing
+    }
+
+    @Override
+    public void first(TileMapWithCandidates<String, FourColorTile> map, Graph<String, Edge> graph)
+    {
+      // TODO Auto-generated method stub
+      
+    }
+
+  }
+
   public static int SEED = 7;
 
   public static final float edgeTolerance = 0.01f;
@@ -58,12 +80,12 @@ public class FourColorMain
 
     FourColorRules<String> rules = new FourColorRules<>(Color.red, "red", Color.blue, "blue",
         Color.green, "green", Color.orange, "orange", graph);
-    WaveFunctionCollapse<String, FourColorTile, Edge> wfc = new WaveFunctionCollapse<String, FourColorTile, Edge>(
-        rules, graph, null, 0, 0, null);
+    WaveFunctionCollapse<String, FourColorTile, Edge, FourColorWFCHandler> wfc = new WaveFunctionCollapse<String, FourColorTile, Edge, FourColorWFCHandler>(
+        rules, graph, new FourColorWFCHandler());
 
     // Random rnd = new Random(SEED);
     Random rnd = new Random();
-    Map<String, FourColorTile> result = wfc.run(rnd, 1);
+    Map<String, FourColorTile> result = wfc.run(rnd);
     System.out.println(result);
   }
 
